@@ -1,0 +1,45 @@
+server { 
+	listen	        80;
+	server_name  	  domain.com;
+
+	access_log  /var/log/nginx/domain.com.access.log;
+    error_log   /var/log/nginx/domain.com.error.log;
+
+    root   /var/www/domain.com;
+    index  index.html index.htm index.php;
+
+    location / {
+        if (!-e $request_filename){
+            rewrite (.*) /index.php last;
+        }
+        try_files $uri $uri/ =404;
+    }
+
+    rewrite ^(.*).html$ 		         /index.php last;
+    rewrite ^(.*).html,([a-z0-9,]*)$ /index.php?params=$2 last;
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location = /favicon.ico {
+        empty_gif;
+    }
+
+    location /s/ {
+        alias           /var/www/domain.com/s/;
+        expires         365d;
+    }
+
+  	gzip_disable    "MSIE [1-6].(?!.*SV1)";
+    gzip            on;
+    gzip_vary       on;
+    gzip_min_length 0;
+    gzip_buffers    4 8k;
+    gzip_types      text/plain text/javascript application/x-javascript text/css text/xml;
+    gzip_static     on;    
+}
